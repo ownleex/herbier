@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Herbier — catalogue des références</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#10130E; --surface:#191E16; --surface-2:#222A1D; --line:#2E3827;
+  --txt:#ECEFE6; --muted:#8C9682;
+  --fruite:#E5605B; --sucre:#E3A83A; --herbace:#79C25A; --terreux:#B98459;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--txt); font-family:var(--body);
+  font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(120% 60% at 50% -10%, #1A2117 0%, var(--bg) 60%);
+  min-height:100vh;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+/* ── En-tête ───────────────────────────────────────────── */
+header{padding:44px 0 26px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(38px,7vw,64px);line-height:.95;margin:0;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--herbace)}
+.sub{color:var(--muted);margin:12px 0 0;max-width:46ch}
+
+/* ── Barre de filtres ──────────────────────────────────── */
+.filters{
+  position:sticky;top:0;z-index:20;margin-top:26px;
+  background:rgba(16,19,14,.86);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+}
+.filters-inner{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:14px 0}
+.field{display:flex;align-items:center;gap:8px}
+label.lbl{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+select,input[type=text],input[type=search]{
+  font-family:var(--body);font-size:14px;color:var(--txt);
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:9px 12px;min-width:150px;
+}
+select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--herbace);outline-offset:2px}
+
+.capsules{display:flex;flex-wrap:wrap;gap:8px}
+.cap{
+  font-family:var(--body);font-size:14px;font-weight:600;color:var(--txt);
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;
+  padding:8px 15px 8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:9px;
+  transition:background .15s,border-color .15s,color .15s;
+}
+.cap .dot{width:9px;height:9px;border-radius:50%;background:var(--c);flex:none;transition:transform .15s}
+.cap:hover{border-color:var(--c)}
+.cap[aria-pressed=true]{background:var(--c);border-color:var(--c);color:#10130E}
+.cap[aria-pressed=true] .dot{background:#10130E;transform:scale(.8)}
+
+.logic{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.logic button{font-family:var(--mono);font-size:11px;letter-spacing:.1em;background:none;border:0;color:var(--muted);padding:8px 12px;cursor:pointer}
+.logic button[aria-pressed=true]{background:var(--surface-2);color:var(--txt)}
+
+.ghost{
+  font-family:var(--body);font-size:13px;color:var(--muted);background:none;
+  border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;
+}
+.ghost:hover{color:var(--txt);border-color:var(--muted)}
+.spacer{flex:1 1 auto}
+
+/* ── Compteur ──────────────────────────────────────────── */
+.count{font-family:var(--mono);font-size:12px;color:var(--muted);padding:20px 0 12px;letter-spacing:.06em}
+.count b{color:var(--txt);font-weight:500}
+
+/* ── Cartes ────────────────────────────────────────────── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px;padding-bottom:40px}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:16px 16px 14px;display:flex;flex-direction:column;gap:12px;position:relative;
+}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ref{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.15;letter-spacing:-.01em;margin:0}
+.type{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 7px;white-space:nowrap;flex:none}
+.type.none{opacity:.5}
+
+/* signature : l'empreinte aromatique en 4 segments */
+.aroma{display:flex;gap:3px}
+.seg{height:5px;flex:1;border-radius:3px;background:#2A3323}
+.seg.on{background:var(--c)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;font-size:12.5px}
+.tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.tag .dot{width:7px;height:7px;border-radius:50%;background:var(--c)}
+.tag.note{font-family:var(--mono);font-size:11px;color:var(--muted);border-style:dashed}
+.tag.empty{color:var(--muted);border-style:dashed}
+
+.empty-state{border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--muted)}
+.empty-state b{display:block;color:var(--txt);font-family:var(--display);font-size:19px;margin-bottom:6px}
+
+/* ── Mode édition ──────────────────────────────────────── */
+.card-actions{display:none;gap:6px}
+body.editing .card-actions{display:flex}
+.mini{font-family:var(--mono);font-size:11px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:4px 8px;cursor:pointer}
+.mini:hover{color:var(--txt)}
+.mini.del:hover{color:var(--fruite);border-color:var(--fruite)}
+.add-card{
+  border:1px dashed var(--line);border-radius:14px;background:none;color:var(--muted);
+  font-family:var(--body);font-size:14px;cursor:pointer;min-height:120px;display:none;
+}
+body.editing .add-card{display:block}
+.add-card:hover{color:var(--herbace);border-color:var(--herbace)}
+
+.bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface-2);
+  border-top:1px solid var(--line);padding:12px 0;display:none;
+}
+.bar.show{display:block}
+.bar-inner{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bar span{font-size:13.5px;color:var(--muted)}
+.primary{
+  font-family:var(--body);font-weight:600;font-size:14px;background:var(--herbace);color:#10130E;
+  border:0;border-radius:999px;padding:9px 18px;cursor:pointer;
+}
+.primary:hover{filter:brightness(1.08)}
+
+dialog{
+  border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--txt);
+  padding:0;width:min(440px,92vw);
+}
+dialog::backdrop{background:rgba(8,10,7,.7)}
+.dlg{padding:22px}
+.dlg h2{font-family:var(--display);font-size:22px;margin:0 0 16px}
+.row{margin-bottom:14px;display:flex;flex-direction:column;gap:6px}
+.row input{width:100%}
+.row .hint{font-size:12px;color:var(--muted)}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.check{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;font-size:14px}
+.check input{accent-color:var(--herbace)}
+.dlg-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+@media (max-width:640px){
+  .filters-inner{gap:10px}
+  select,input[type=search]{min-width:0;width:100%}
+  .field{width:100%}
+  .spacer{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Catalogue interne — <span id="stamp">40</span> références</p>
+    <h1>Herbier<em>.</em></h1>
+    <p class="sub">Filtrez par type, puis par profil aromatique. Combinez autant de profils que nécessaire.</p>
+  </header>
+</div>
+
+<div class="filters">
+  <div class="wrap">
+    <div class="filters-inner">
+      <div class="field">
+        <label class="lbl" for="type">Type</label>
+        <select id="type"><option value="">Tous les types</option></select>
+      </div>
+
+      <div class="capsules" id="capsules"></div>
+
+      <div class="logic" role="group" aria-label="Combinaison des profils">
+        <button type="button" data-logic="or" aria-pressed="true">AU MOINS UN</button>
+        <button type="button" data-logic="and" aria-pressed="false">TOUS</button>
+      </div>
+
+      <div class="field" style="flex:1 1 180px">
+        <input type="search" id="q" placeholder="Rechercher une référence…" aria-label="Rechercher une référence">
+      </div>
+
+      <button class="ghost" id="reset" type="button">Effacer les filtres</button>
+      <div class="spacer"></div>
+      <button class="ghost" id="editToggle" type="button" aria-pressed="false">Mode édition</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <p class="count" id="count"></p>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="bar" id="bar">
+  <div class="wrap bar-inner">
+    <span id="barTxt">Modifications non enregistrées.</span>
+    <button class="primary" id="download" type="button">Télécharger data.js</button>
+    <button class="ghost" id="revert" type="button">Revenir au fichier d'origine</button>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" class="dlg" id="form">
+    <h2 id="dlgTitle">Nouvelle référence</h2>
+    <div class="row">
+      <label class="lbl" for="f-ref">Référence</label>
+      <input type="text" id="f-ref" required placeholder="Green Apple">
+    </div>
+    <div class="row">
+      <label class="lbl" for="f-type">Type</label>
+      <input type="text" id="f-type" list="types" placeholder="30% Gold">
+      <datalist id="types"></datalist>
+    </div>
+    <div class="row">
+      <span class="lbl">Profils aromatiques</span>
+      <div class="checks" id="f-profils"></div>
+    </div>
+    <div class="row">
+      <label class="lbl" for="f-notes">Notes</label>
+      <input type="text" id="f-notes" placeholder="Acidulé, Agrume">
+      <span class="hint">Séparez par des virgules. Laissez vide s'il n'y en a pas.</span>
+    </div>
+    <div class="dlg-actions">
+      <button class="ghost" value="cancel" type="submit" formnovalidate>Annuler</button>
+      <button class="primary" value="save" id="save">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="data.js"></script>
+<script>
+const PROFILS = [
+  {nom:'Fruité',  css:'var(--fruite)'},
+  {nom:'Sucré',   css:'var(--sucre)'},
+  {nom:'Herbacé', css:'var(--herbace)'},
+  {nom:'Terreux', css:'var(--terreux)'}
+];
+const KEY = 'herbier-brouillon';
+
+let data = charger();
+let actifs = new Set();
+let logic = 'or';
+let editing = false;
+let cible = null; // id en cours d'édition, null = ajout
+
+function charger(){
+  try{
+    const brouillon = localStorage.getItem(KEY);
+    if(brouillon) return JSON.parse(brouillon);
+  }catch(e){}
+  return structuredClone(HERBES);
+}
+function sauverBrouillon(){
+  try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){}
+  majBarre();
+}
+function modifie(){
+  return JSON.stringify(data) !== JSON.stringify(HERBES);
+}
+function majBarre(){
+  const b = document.getElementById('bar');
+  b.classList.toggle('show', modifie());
+  document.getElementById('barTxt').textContent =
+    data.length + ' références dans votre version de travail — remplacez data.js pour les publier.';
+}
+
+/* ── Construction des contrôles ─────────────────────────── */
+const capsules = document.getElementById('capsules');
+PROFILS.forEach(p=>{
+  const b = document.createElement('button');
+  b.type='button'; b.className='cap'; b.style.setProperty('--c',p.css);
+  b.setAttribute('aria-pressed','false'); b.dataset.profil = p.nom;
+  b.innerHTML = '<span class="dot"></span>' + p.nom;
+  b.onclick = ()=>{
+    actifs.has(p.nom) ? actifs.delete(p.nom) : actifs.add(p.nom);
+    b.setAttribute('aria-pressed', actifs.has(p.nom));
+    rendre();
+  };
+  capsules.appendChild(b);
+});
+const checks = document.getElementById('f-profils');
+PROFILS.forEach(p=>{
+  const l = document.createElement('label');
+  l.className='check';
+  l.innerHTML = '<input type="checkbox" value="'+p.nom+'"> '+p.nom;
+  checks.appendChild(l);
+});
+document.querySelectorAll('.logic button').forEach(b=>{
+  b.onclick = ()=>{
+    logic = b.dataset.logic;
+    document.querySelectorAll('.logic button').forEach(x=>x.setAttribute('aria-pressed', x===b));
+    rendre();
+  };
+});
+function majTypes(){
+  const sel = document.getElementById('type'), garde = sel.value;
+  const types = [...new Set(data.map(h=>h.type).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Tous les types</option>' +
+    types.map(t=>`<option>${esc(t)}</option>`).join('');
+  if(data.some(h=>!h.type)) sel.innerHTML += '<option value="__none">Sans type</option>';
+  sel.value = garde;
+  document.getElementById('types').innerHTML = types.map(t=>`<option>${esc(t)}</option>`).join('');
+}
+document.getElementById('type').onchange = rendre;
+document.getElementById('q').oninput = rendre;
+document.getElementById('reset').onclick = ()=>{
+  actifs.clear(); document.getElementById('type').value=''; document.getElementById('q').value='';
+  document.querySelectorAll('.cap').forEach(c=>c.setAttribute('aria-pressed','false'));
+  rendre();
+};
+document.getElementById('editToggle').onclick = (e)=>{
+  editing = !editing;
+  document.body.classList.toggle('editing', editing);
+  e.target.setAttribute('aria-pressed', editing);
+  e.target.textContent = editing ? 'Quitter l\'édition' : 'Mode édition';
+};
+
+/* ── Rendu ─────────────────────────────────────────────── */
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function couleur(nom){ return (PROFILS.find(p=>p.nom===nom)||{}).css || 'var(--muted)'; }
+
+function filtrer(){
+  const t = document.getElementById('type').value;
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  return data.filter(h=>{
+    if(t === '__none' && h.type) return false;
+    if(t && t !== '__none' && h.type !== t) return false;
+    if(actifs.size){
+      const has = [...actifs].filter(p=>(h.profils||[]).includes(p));
+      if(logic === 'and' ? has.length !== actifs.size : has.length === 0) return false;
+    }
+    if(q && !(h.ref+' '+h.type+' '+(h.notes||[]).join(' ')).toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function rendre(){
+  majTypes();
+  const res = filtrer(), grid = document.getElementById('grid');
+  document.getElementById('stamp').textContent = data.length;
+  document.getElementById('count').innerHTML =
+    `<b>${res.length}</b> référence${res.length>1?'s':''} sur ${data.length}` +
+    (actifs.size ? ` · ${logic==='and'?'tous les profils':'au moins un profil'} : ${[...actifs].join(', ')}` : '');
+
+  grid.innerHTML = res.map(h=>{
+    const profils = h.profils || [], notes = h.notes || [];
+    const segs = PROFILS.map(p=>
+      `<span class="seg ${profils.includes(p.nom)?'on':''}" style="--c:${p.css}"></span>`).join('');
+    const tags = profils.length
+      ? profils.map(p=>`<span class="tag" style="--c:${couleur(p)}"><span class="dot"></span>${esc(p)}</span>`).join('')
+      : '<span class="tag empty">Profil non renseigné</span>';
+    const nt = notes.map(n=>`<span class="tag note">${esc(n)}</span>`).join('');
+    return `<article class="card">
+      <div class="card-top">
+        <h3 class="ref">${esc(h.ref)}</h3>
+        <span class="type ${h.type?'':'none'}">${esc(h.type||'sans type')}</span>
+      </div>
+      <div class="aroma" aria-hidden="true">${segs}</div>
+      <div class="tags">${tags}${nt}</div>
+      <div class="card-actions">
+        <button class="mini" data-edit="${h.id}">Modifier</button>
+        <button class="mini del" data-del="${h.id}">Supprimer</button>
+      </div>
+    </article>`;
+  }).join('');
+
+  if(!res.length){
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <b>Aucune référence ne correspond</b>Retirez un profil ou repassez le type sur « Tous les types ».</div>`;
+  }
+  const add = document.createElement('button');
+  add.className='add-card'; add.type='button'; add.textContent='+  Ajouter une référence';
+  add.onclick = ()=>ouvrir(null);
+  grid.appendChild(add);
+
+  grid.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>ouvrir(b.dataset.edit));
+  grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    const h = data.find(x=>x.id===b.dataset.del);
+    if(confirm(`Supprimer « ${h.ref} » ?`)){
+      data = data.filter(x=>x.id!==b.dataset.del);
+      sauverBrouillon(); rendre();
+    }
+  });
+  majBarre();
+}
+
+/* ── Ajout / modification ──────────────────────────────── */
+const dlg = document.getElementById('dlg');
+function ouvrir(id){
+  cible = id;
+  const h = id ? data.find(x=>x.id===id) : {ref:'',type:'',profils:[],notes:[]};
+  document.getElementById('dlgTitle').textContent = id ? 'Modifier la référence' : 'Nouvelle référence';
+  document.getElementById('f-ref').value = h.ref;
+  document.getElementById('f-type').value = h.type || '';
+  document.getElementById('f-notes').value = (h.notes||[]).join(', ');
+  checks.querySelectorAll('input').forEach(i=> i.checked = (h.profils||[]).includes(i.value));
+  dlg.showModal();
+}
+document.getElementById('form').addEventListener('submit', e=>{
+  if(e.submitter && e.submitter.value === 'cancel') return;
+  const val = {
+    ref:  document.getElementById('f-ref').value.trim(),
+    type: document.getElementById('f-type').value.trim(),
+    profils: [...checks.querySelectorAll('input:checked')].map(i=>i.value),
+    notes: document.getElementById('f-notes').value.split(',').map(s=>s.trim()).filter(Boolean)
+  };
+  if(cible){
+    Object.assign(data.find(x=>x.id===cible), val);
+  }else{
+    let n = 1; while(data.some(x=>x.id === 'h'+String(n).padStart(2,'0'))) n++;
+    data.push({id:'h'+String(n).padStart(2,'0'), ...val});
+  }
+  sauverBrouillon(); rendre();
+});
+
+/* ── Export ────────────────────────────────────────────── */
+document.getElementById('download').onclick = ()=>{
+  const entete =
+`// ─────────────────────────────────────────────────────────────
+//  BASE DE RÉFÉRENCES — c'est le SEUL fichier à modifier.
+//
+//  Une ligne = une référence. Pour en ajouter une, copiez une
+//  ligne existante et changez les valeurs. Pour en supprimer une,
+//  effacez sa ligne. Attention à la virgule en fin de ligne :
+//  toutes les lignes en ont une, sauf la dernière.
+//
+//  profils : uniquement parmi "Fruité", "Sucré", "Herbacé", "Terreux"
+//  notes   : texte libre ("Acidulé", "Agrume", "Exotique"…)
+//  id      : doit rester unique
+// ─────────────────────────────────────────────────────────────
+
+const HERBES = [
+`;
+  const corps = data.map(h=>'  '+JSON.stringify(h)).join(',\n');
+  const blob = new Blob([entete+corps+'\n];\n'], {type:'text/javascript;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'data.js'; a.click();
+  URL.revokeObjectURL(a.href);
+};
+document.getElementById('revert').onclick = ()=>{
+  if(!confirm('Abandonner vos modifications et revenir au contenu de data.js ?')) return;
+  localStorage.removeItem(KEY);
+  data = structuredClone(HERBES);
+  rendre();
+};
+
+rendre();
+</script>
+</body>
+</html>
