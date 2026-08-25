@@ -179,8 +179,8 @@ dialog::backdrop{background:rgba(8,10,7,.7)}
       <div class="capsules" id="capsules"></div>
 
       <div class="logic" role="group" aria-label="Combinaison des profils">
-        <button type="button" data-logic="or" aria-pressed="true">AU MOINS UN</button>
-        <button type="button" data-logic="and" aria-pressed="false">TOUS</button>
+        <button type="button" data-logic="or" aria-pressed="false">AU MOINS UN</button>
+        <button type="button" data-logic="and" aria-pressed="true">TOUS</button>
       </div>
 
       <div class="field" style="flex:1 1 180px">
@@ -247,7 +247,7 @@ const KEY = 'herbier-brouillon';
 
 let data = charger();
 let actifs = new Set();
-let logic = 'or';
+let logic = 'and';
 let editing = false;
 let cible = null; // id en cours d'édition, null = ajout
 
