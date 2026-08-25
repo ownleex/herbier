@@ -339,7 +339,7 @@ function filtrer(){
     }
     if(q && !(h.ref+' '+h.type+' '+(h.notes||[]).join(' ')).toLowerCase().includes(q)) return false;
     return true;
-  });
+  }).sort((a,b)=> a.ref.localeCompare(b.ref,'fr',{sensitivity:'base',numeric:true}));
 }
 
 function rendre(){
