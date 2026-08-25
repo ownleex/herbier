@@ -52,5 +52,5 @@ const HERBES = [
   {"id":"h38","ref":"Pineapple","type":"CBD Hydro","profils":["Fruité","Terreux"],"notes":[]},
   {"id":"h39","ref":"White Widow","type":"CBD Hydro","profils":["Terreux"],"notes":["Acidulé"]},
   {"id":"h40","ref":"Gelato RS","type":"CBD Hydro","profils":["Herbacé","Fruité"],"notes":["Acidulé"]},
-  {"id":"h41","ref":"test","type":"","profils":[],"notes":[]}
+  {"id":"h41","ref":"tttt","type":"","profils":[],"notes":[]}
 ];
