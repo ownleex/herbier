@@ -85,17 +85,24 @@ select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid 
 }
 .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .ref{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.15;letter-spacing:-.01em;margin:0}
-.type{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 7px;white-space:nowrap;flex:none}
-.type.none{opacity:.5}
+.type{
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  color:#10130E;background:var(--sucre);
+  border:1px solid var(--sucre);border-radius:6px;
+  padding:3px 8px;white-space:nowrap;flex:none;
+}
+.type.none{background:none;border-color:var(--line);color:var(--muted);opacity:.5}
 
 /* signature : l'empreinte aromatique en 4 segments */
 .aroma{display:flex;gap:3px}
 .seg{height:5px;flex:1;border-radius:3px;background:#2A3323}
 .seg.on{background:var(--c)}
-.tags{display:flex;flex-wrap:wrap;gap:6px;font-size:12.5px}
+.meta{display:flex;flex-direction:column;align-items:stretch;gap:8px}
+.tags,.notes{display:flex;flex-wrap:wrap;gap:6px;font-size:12.5px}
+.notes{justify-content:flex-end}
 .tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
 .tag .dot{width:7px;height:7px;border-radius:50%;background:var(--c)}
-.tag.note{font-family:var(--mono);font-size:11px;color:var(--muted);border-style:dashed}
+.tag.note{font-family:var(--mono);font-size:11px;color:var(--txt);border-style:dashed;border-color:var(--muted)}
 .tag.empty{color:var(--muted);border-style:dashed}
 
 .empty-state{border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--muted)}
@@ -357,7 +364,10 @@ function rendre(){
         <span class="type ${h.type?'':'none'}">${esc(h.type||'sans type')}</span>
       </div>
       <div class="aroma" aria-hidden="true">${segs}</div>
-      <div class="tags">${tags}${nt}</div>
+      <div class="meta">
+        <div class="tags">${tags}</div>
+        ${nt ? `<div class="notes">${nt}</div>` : ''}
+      </div>
       <div class="card-actions">
         <button class="mini" data-edit="${h.id}">Modifier</button>
         <button class="mini del" data-del="${h.id}">Supprimer</button>
