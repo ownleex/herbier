@@ -20,7 +20,7 @@ modifier `data.js` directement depuis le navigateur, sans rien réinstaller.
 2. **Add file → Upload files** : déposez `index.html` et `data.js`, puis *Commit changes*.
 3. **Settings → Pages** → *Source* : `Deploy from a branch` → branche `main`, dossier `/ (root)` → *Save*.
 4. Une minute plus tard, le site est à l'adresse
-   `https://VOTRE-PSEUDO.github.io/herbier/`.
+   `https://ownleex.github.io/herbier/`.
 
 ### Mettre à jour les références ensuite
 
