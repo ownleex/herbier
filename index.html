@@ -202,7 +202,9 @@ dialog::backdrop{background:rgba(8,10,7,.7)}
 <div class="bar" id="bar">
   <div class="wrap bar-inner">
     <span id="barTxt">Modifications non enregistrées.</span>
-    <button class="primary" id="download" type="button">Télécharger data.js</button>
+    <button class="primary" id="publish" type="button">Publier sur GitHub</button>
+    <button class="ghost" id="download" type="button">Télécharger data.js</button>
+    <button class="ghost" id="token" type="button">Jeton…</button>
     <button class="ghost" id="revert" type="button">Revenir au fichier d'origine</button>
   </div>
 </div>
@@ -244,7 +246,10 @@ const PROFILS = [
   {nom:'Terreux', css:'var(--terreux)'}
 ];
 const KEY = 'herbier-brouillon';
+const TKEY = 'herbier-token';
+const GH = { owner:'ownleex', repo:'herbier', branch:'main', path:'data.js' };
 
+let base = structuredClone(HERBES);   // dernier contenu publié connu
 let data = charger();
 let actifs = new Set();
 let logic = 'and';
@@ -263,13 +268,13 @@ function sauverBrouillon(){
   majBarre();
 }
 function modifie(){
-  return JSON.stringify(data) !== JSON.stringify(HERBES);
+  return JSON.stringify(data) !== JSON.stringify(base);
 }
-function majBarre(){
+function majBarre(txt){
   const b = document.getElementById('bar');
-  b.classList.toggle('show', modifie());
-  document.getElementById('barTxt').textContent =
-    data.length + ' références dans votre version de travail — remplacez data.js pour les publier.';
+  b.classList.toggle('show', modifie() || !!txt);
+  document.getElementById('barTxt').textContent = txt ||
+    data.length + ' références dans votre version de travail — publiez-les pour les mettre en ligne.';
 }
 
 /* ── Construction des contrôles ─────────────────────────── */
@@ -425,7 +430,7 @@ document.getElementById('form').addEventListener('submit', e=>{
 });
 
 /* ── Export ────────────────────────────────────────────── */
-document.getElementById('download').onclick = ()=>{
+function fichierData(){
   const entete =
 `// ─────────────────────────────────────────────────────────────
 //  BASE DE RÉFÉRENCES — c'est le SEUL fichier à modifier.
@@ -442,17 +447,96 @@ document.getElementById('download').onclick = ()=>{
 
 const HERBES = [
 `;
-  const corps = data.map(h=>'  '+JSON.stringify(h)).join(',\n');
-  const blob = new Blob([entete+corps+'\n];\n'], {type:'text/javascript;charset=utf-8'});
+  return entete + data.map(h=>'  '+JSON.stringify(h)).join(',\n') + '\n];\n';
+}
+document.getElementById('download').onclick = ()=>{
+  const blob = new Blob([fichierData()], {type:'text/javascript;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = 'data.js'; a.click();
   URL.revokeObjectURL(a.href);
 };
 document.getElementById('revert').onclick = ()=>{
-  if(!confirm('Abandonner vos modifications et revenir au contenu de data.js ?')) return;
+  if(!confirm('Abandonner vos modifications et revenir au contenu publié ?')) return;
   localStorage.removeItem(KEY);
-  data = structuredClone(HERBES);
+  data = structuredClone(base);
   rendre();
+};
+
+/* ── Publication sur GitHub ────────────────────────────── */
+function b64(txt){
+  const o = new TextEncoder().encode(txt);
+  let s = '';
+  for(let i=0;i<o.length;i+=8192) s += String.fromCharCode(...o.subarray(i,i+8192));
+  return btoa(s);
+}
+function jeton(){
+  try{ return localStorage.getItem(TKEY) || ''; }catch(e){ return ''; }
+}
+function demanderJeton(){
+  const v = prompt(
+    'Jeton GitHub (fine-grained, permission Contents: Read and write sur ownleex/herbier).\n' +
+    'Laissez vide pour effacer le jeton enregistré.',
+    jeton());
+  if(v === null) return jeton();
+  const t = v.trim();
+  try{ t ? localStorage.setItem(TKEY, t) : localStorage.removeItem(TKEY); }catch(e){}
+  return t;
+}
+document.getElementById('token').onclick = ()=>{
+  const t = demanderJeton();
+  majBarre(t ? 'Jeton enregistré dans ce navigateur.' : 'Jeton effacé.');
+};
+
+async function gh(url, options){
+  const r = await fetch(url, {
+    ...options,
+    headers: {
+      Authorization: 'Bearer ' + jeton(),
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(options && options.headers)
+    }
+  });
+  return r;
+}
+
+document.getElementById('publish').onclick = async ()=>{
+  const btn = document.getElementById('publish');
+  if(!jeton() && !demanderJeton()) return majBarre('Publication annulée : aucun jeton.');
+  if(!modifie()) return majBarre('Aucune modification à publier.');
+
+  btn.disabled = true;
+  majBarre('Publication en cours…');
+  const api = `https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${GH.path}`;
+  try{
+    const info = await gh(`${api}?ref=${GH.branch}`);
+    if(info.status === 401){ throw new Error('Jeton refusé (401). Il est peut-être expiré : cliquez sur « Jeton… » pour le remplacer.'); }
+    if(info.status === 403){ throw new Error('Accès refusé (403). Vérifiez la permission « Contents: Read and write » du jeton.'); }
+    if(!info.ok){ throw new Error('Lecture de data.js impossible (' + info.status + ').'); }
+    const { sha } = await info.json();
+
+    const put = await gh(api, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: `data.js — ${data.length} références`,
+        content: b64(fichierData()),
+        sha,
+        branch: GH.branch
+      })
+    });
+    if(put.status === 409){ throw new Error('Conflit : data.js a changé sur GitHub entre-temps. Rechargez la page, puis republiez.'); }
+    if(!put.ok){
+      let d = {}; try{ d = await put.json(); }catch(e){}
+      throw new Error('Échec de la publication (' + put.status + ') ' + (d.message || ''));
+    }
+    base = structuredClone(data);
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    majBarre('Publié. Le site sera à jour dans une minute environ.');
+  }catch(err){
+    majBarre('⚠ ' + err.message);
+  }finally{
+    btn.disabled = false;
+  }
 };
 
 rendre();
