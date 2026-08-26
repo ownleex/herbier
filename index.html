@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- dépôt (ou adresse) du portail qui liste les catalogues ; vider = pas de bouton -->
+<meta name="portail" content="rocsier">
 <title>Herbier — catalogue des références</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -158,6 +160,26 @@ dialog::backdrop{background:rgba(8,10,7,.7)}
   .spacer{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ── Bouton de retour vers le portail ──────────────────── */
+.portail{
+  position:fixed;left:20px;bottom:20px;z-index:30;
+  width:54px;height:54px;border-radius:50%;
+  display:none;align-items:center;justify-content:center;
+  color:var(--herbace);background:var(--surface);border:1px solid var(--line);
+  box-shadow:0 6px 20px rgba(0,0,0,.45);
+  transition:border-color .18s ease,background .18s ease,transform .18s ease;
+}
+.portail.on{display:flex}
+.portail svg{width:30px;height:30px;transition:transform .18s ease}
+.portail:hover,.portail:focus-visible{border-color:var(--herbace);background:var(--surface-2);transform:translateY(-2px)}
+.portail:hover svg,.portail:focus-visible svg{transform:scale(1.07)}
+.portail:focus-visible{outline:2px solid var(--herbace);outline-offset:3px}
+.bar.show ~ .portail{bottom:96px}
+@media (max-width:640px){
+  .portail{left:14px;bottom:14px;width:48px;height:48px}
+  .portail svg{width:26px;height:26px}
+}
 </style>
 </head>
 <body>
@@ -213,6 +235,19 @@ dialog::backdrop{background:rgba(8,10,7,.7)}
     <button class="ghost" id="revert" type="button">Revenir au fichier d'origine</button>
   </div>
 </div>
+
+<a class="portail" id="portail" href="#" title="Tous les catalogues" aria-label="Revenir aux catalogues">
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><g transform="translate(12 19.0)">
+      <path transform="rotate(0)" d="M 0 0 C -0.69 -3.74, -3.12 -6.24, -1.56 -7.80 L -2.50 -9.36 C -1.25 -10.61, -1.75 -11.86, -0.81 -12.79 L -1.12 -14.04 C -0.50 -14.51, -0.25 -15.13, 0 -15.60 C 0.25 -15.13, 0.50 -14.51, 1.12 -14.04 L 0.81 -12.79 C 1.75 -11.86, 1.25 -10.61, 2.50 -9.36 L 1.56 -7.80 C 3.12 -6.24, 0.69 -3.74, 0 0 Z"/>
+      <path transform="rotate(-33)" d="M 0 0 C -0.60 -3.26, -2.71 -5.43, -1.36 -6.79 L -2.17 -8.14 C -1.09 -9.23, -1.52 -10.31, -0.71 -11.13 L -0.98 -12.21 C -0.43 -12.62, -0.22 -13.16, 0 -13.57 C 0.22 -13.16, 0.43 -12.62, 0.98 -12.21 L 0.71 -11.13 C 1.52 -10.31, 1.09 -9.23, 2.17 -8.14 L 1.36 -6.79 C 2.71 -5.43, 0.60 -3.26, 0 0 Z"/>
+      <path transform="rotate(33)" d="M 0 0 C -0.60 -3.26, -2.71 -5.43, -1.36 -6.79 L -2.17 -8.14 C -1.09 -9.23, -1.52 -10.31, -0.71 -11.13 L -0.98 -12.21 C -0.43 -12.62, -0.22 -13.16, 0 -13.57 C 0.22 -13.16, 0.43 -12.62, 0.98 -12.21 L 0.71 -11.13 C 1.52 -10.31, 1.09 -9.23, 2.17 -8.14 L 1.36 -6.79 C 2.71 -5.43, 0.60 -3.26, 0 0 Z"/>
+      <path transform="rotate(-63)" d="M 0 0 C -0.47 -2.55, -2.12 -4.24, -1.06 -5.30 L -1.70 -6.36 C -0.85 -7.21, -1.19 -8.06, -0.55 -8.70 L -0.76 -9.55 C -0.34 -9.87, -0.17 -10.29, 0 -10.61 C 0.17 -10.29, 0.34 -9.87, 0.76 -9.55 L 0.55 -8.70 C 1.19 -8.06, 0.85 -7.21, 1.70 -6.36 L 1.06 -5.30 C 2.12 -4.24, 0.47 -2.55, 0 0 Z"/>
+      <path transform="rotate(63)" d="M 0 0 C -0.47 -2.55, -2.12 -4.24, -1.06 -5.30 L -1.70 -6.36 C -0.85 -7.21, -1.19 -8.06, -0.55 -8.70 L -0.76 -9.55 C -0.34 -9.87, -0.17 -10.29, 0 -10.61 C 0.17 -10.29, 0.34 -9.87, 0.76 -9.55 L 0.55 -8.70 C 1.19 -8.06, 0.85 -7.21, 1.70 -6.36 L 1.06 -5.30 C 2.12 -4.24, 0.47 -2.55, 0 0 Z"/>
+      <path transform="rotate(-93)" d="M 0 0 C -0.32 -1.72, -1.44 -2.87, -0.72 -3.59 L -1.15 -4.31 C -0.57 -4.88, -0.80 -5.45, -0.37 -5.88 L -0.52 -6.46 C -0.23 -6.67, -0.11 -6.96, 0 -7.18 C 0.11 -6.96, 0.23 -6.67, 0.52 -6.46 L 0.37 -5.88 C 0.80 -5.45, 0.57 -4.88, 1.15 -4.31 L 0.72 -3.59 C 1.44 -2.87, 0.32 -1.72, 0 0 Z"/>
+      <path transform="rotate(93)" d="M 0 0 C -0.32 -1.72, -1.44 -2.87, -0.72 -3.59 L -1.15 -4.31 C -0.57 -4.88, -0.80 -5.45, -0.37 -5.88 L -0.52 -6.46 C -0.23 -6.67, -0.11 -6.96, 0 -7.18 C 0.11 -6.96, 0.23 -6.67, 0.52 -6.46 L 0.37 -5.88 C 0.80 -5.45, 0.57 -4.88, 1.15 -4.31 L 0.72 -3.59 C 1.44 -2.87, 0.32 -1.72, 0 0 Z"/>
+      <path d="M0 0 L0 3.0" stroke="currentColor" stroke-width="1" stroke-linecap="round" fill="none"/>
+</g></svg>
+</a>
 
 <dialog id="dlg">
   <form method="dialog" class="dlg" id="form">
@@ -666,6 +701,32 @@ document.getElementById('publish').onclick = async ()=>{
     btn.disabled = false;
   }
 };
+
+
+/* ── Bouton de retour vers le portail ──────────────────── */
+// L'adresse est déduite à l'exécution : rien à modifier si le site part
+// sur un autre compte GitHub. La balise <meta name="portail"> du <head>
+// accepte trois formes :
+//   "rocsier"             → dépôt voisin, sur la même origine
+//   "/portail/"           → chemin absolu, sur la même origine
+//   "https://exemple.fr/" → adresse complète, ailleurs
+// Vider le contenu de la balise fait disparaître le bouton.
+function urlPortail(){
+  const meta = document.querySelector('meta[name="portail"]');
+  const v = ((meta && meta.content) || '').trim();
+  if(!v) return '';
+  if(/^https?:\/\//i.test(v)) return v.replace(/\/*$/, '/');
+  if(v.startsWith('/'))       return location.origin + v.replace(/\/*$/, '/');
+  return location.origin + '/' + v.replace(/^\/+|\/+$/g, '') + '/';
+}
+(function(){
+  const a = document.getElementById('portail'), u = urlPortail();
+  if(!u) return;
+  a.href = u;
+  const ici = location.href.split(/[?#]/)[0].replace(/index\.html$/, '');
+  if(ici === u) return;          // déjà sur le portail : pas de bouton
+  a.classList.add('on');
+})();
 
 rendre();
 </script>
