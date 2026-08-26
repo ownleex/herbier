@@ -46,5 +46,6 @@ const HERBES = [
   {"id":"h32","ref":"Mix Promo","type":"CBD Hydro","profils":["Fruité","Terreux"],"notes":[]},
   {"id":"h33","ref":"Pineapple","type":"CBD Hydro","profils":["Fruité","Terreux"],"notes":[]},
   {"id":"h34","ref":"White Widow","type":"CBD Hydro","profils":["Terreux"],"notes":["Acidulé"]},
-  {"id":"h35","ref":"Gelato RS","type":"CBD Hydro","profils":["Herbacé","Fruité"],"notes":["Acidulé"]}
+  {"id":"h35","ref":"Gelato RS","type":"CBD Hydro","profils":["Herbacé","Fruité"],"notes":["Acidulé"]},
+  {"id":"h36","ref":"test","type":"CBD Hydro","profils":["Terreux"],"notes":[]}
 ];
