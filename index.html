@@ -111,6 +111,8 @@ select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid 
 /* ── Mode édition ──────────────────────────────────────── */
 .card-actions{display:none;gap:6px}
 body.editing .card-actions{display:flex}
+.edit-only{display:none}
+body.editing .edit-only{display:inline-block}
 .mini{font-family:var(--mono);font-size:11px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:4px 8px;cursor:pointer}
 .mini:hover{color:var(--txt)}
 .mini.del:hover{color:var(--fruite);border-color:var(--fruite)}
@@ -189,6 +191,9 @@ dialog::backdrop{background:rgba(8,10,7,.7)}
 
       <button class="ghost" id="reset" type="button">Effacer les filtres</button>
       <div class="spacer"></div>
+      <button class="ghost edit-only" id="importXlsx" type="button">Importer un tableur</button>
+      <button class="ghost edit-only" id="exportXlsx" type="button">Exporter en .xlsx</button>
+      <input type="file" id="fileXlsx" accept=".xlsx,.xlsm,.xls,.csv" hidden>
       <button class="ghost" id="editToggle" type="button" aria-pressed="false">Mode édition</button>
     </div>
   </div>
@@ -460,6 +465,129 @@ document.getElementById('revert').onclick = ()=>{
   localStorage.removeItem(KEY);
   data = structuredClone(base);
   rendre();
+};
+
+/* ── Tableur : import et export ────────────────────────── */
+const CDN_XLSX = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+const COLONNES = ['id','ref','type','profils','notes'];
+let libXlsx = null;
+
+function chargerLib(){
+  if(libXlsx) return libXlsx;
+  libXlsx = new Promise((ok, ko)=>{
+    const s = document.createElement('script');
+    s.src = CDN_XLSX;
+    s.onload  = ()=> ok(window.XLSX);
+    s.onerror = ()=>{ libXlsx = null; ko(new Error('Bibliothèque tableur inaccessible. Vérifiez la connexion, puis réessayez.')); };
+    document.head.appendChild(s);
+  });
+  return libXlsx;
+}
+
+function normalise(s){
+  return String(s).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+function colonne(cle){
+  const n = normalise(cle);
+  if(n === 'id') return 'id';
+  if(['ref','reference','references','nom'].includes(n)) return 'ref';
+  if(['type','gamme','categorie'].includes(n)) return 'type';
+  if(['profils','profil','profils aromatiques','profil aromatique'].includes(n)) return 'profils';
+  if(['notes','note'].includes(n)) return 'notes';
+  return null;
+}
+function decouper(v){
+  return String(v == null ? '' : v).split(/[,;|/]/).map(s=>s.trim()).filter(Boolean);
+}
+function profilConnu(v){
+  const n = normalise(v);
+  return (PROFILS.find(p=>normalise(p.nom) === n) || {}).nom || null;
+}
+function idLibre(pris){
+  let n = 1;
+  while(pris.has('h'+String(n).padStart(2,'0'))) n++;
+  const id = 'h'+String(n).padStart(2,'0');
+  pris.add(id);
+  return id;
+}
+
+document.getElementById('importXlsx').onclick = ()=> document.getElementById('fileXlsx').click();
+
+document.getElementById('fileXlsx').onchange = async (e)=>{
+  const f = e.target.files[0];
+  e.target.value = '';           // permet de réimporter le même fichier
+  if(!f) return;
+  majBarre('Lecture de « ' + f.name + ' »…');
+  try{
+    const XLSX = await chargerLib();
+    const wb = XLSX.read(await f.arrayBuffer());
+    const feuille = wb.SheetNames.find(n=>normalise(n) === 'references') || wb.SheetNames[0];
+    const lignes = XLSX.utils.sheet_to_json(wb.Sheets[feuille], {defval:'', raw:false});
+    if(!lignes.length) throw new Error('La feuille « ' + feuille + ' » ne contient aucune ligne.');
+
+    const pris = new Set(), inconnus = new Set(), lu = [];
+    let sansRef = 0;
+
+    lignes.forEach(l=>{
+      const o = {};
+      for(const cle in l){ const c = colonne(cle); if(c) o[c] = l[cle]; }
+
+      const ref = String(o.ref || '').trim();
+      if(!ref){ sansRef++; return; }
+
+      const profils = [];
+      decouper(o.profils).forEach(v=>{
+        const p = profilConnu(v);
+        if(p){ if(!profils.includes(p)) profils.push(p); }
+        else inconnus.add(v);
+      });
+
+      let id = String(o.id || '').trim();
+      if(!id || pris.has(id)) id = idLibre(pris); else pris.add(id);
+
+      lu.push({id, ref, type:String(o.type || '').trim(), profils, notes:decouper(o.notes)});
+    });
+
+    if(!lu.length) throw new Error('Aucune ligne exploitable : la colonne « ref » est absente ou vide.');
+    if(!confirm(`Remplacer les ${data.length} références actuelles par les ${lu.length} du fichier ?`))
+      return majBarre('Import abandonné, rien n\'a changé.');
+
+    data = lu;
+    sauverBrouillon();
+    rendre();
+
+    const alertes = [];
+    if(sansRef) alertes.push(sansRef + ' ligne' + (sansRef>1?'s':'') + ' sans référence, écartée' + (sansRef>1?'s':''));
+    if(inconnus.size) alertes.push('profils non reconnus, laissés de côté : ' + [...inconnus].join(', '));
+    majBarre(lu.length + ' références importées' + (alertes.length ? ' — ' + alertes.join(' ; ') : '') +
+             '. Publiez pour les mettre en ligne.');
+  }catch(err){
+    majBarre('⚠ ' + err.message);
+  }
+};
+
+document.getElementById('exportXlsx').onclick = async ()=>{
+  majBarre('Préparation du fichier…');
+  try{
+    const XLSX = await chargerLib();
+    const lignes = [...data]
+      .sort((a,b)=> a.ref.localeCompare(b.ref,'fr',{sensitivity:'base',numeric:true}))
+      .map(h=>({
+        id: h.id,
+        ref: h.ref,
+        type: h.type || '',
+        profils: (h.profils || []).join(', '),
+        notes: (h.notes || []).join(', ')
+      }));
+    const ws = XLSX.utils.json_to_sheet(lignes, {header: COLONNES});
+    ws['!cols'] = [{wch:6},{wch:26},{wch:14},{wch:32},{wch:28}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Références');
+    XLSX.writeFile(wb, 'herbier.xlsx');
+    majBarre(data.length + ' références exportées dans herbier.xlsx.');
+  }catch(err){
+    majBarre('⚠ ' + err.message);
+  }
 };
 
 /* ── Publication sur GitHub ────────────────────────────── */
