@@ -287,7 +287,25 @@ const PROFILS = [
 ];
 const KEY = 'herbier-brouillon';
 const TKEY = 'herbier-token';
-const GH = { owner:'ownleex', repo:'herbier', branch:'main', path:'data.js' };
+/* ── Dépôt GitHub : déduit de l'adresse de la page ──────── */
+// Sur GitHub Pages, https://<compte>.github.io/<depot>/ contient déjà
+// tout : le sous-domaine donne le compte, le premier segment du chemin
+// donne le dépôt. Rien à modifier en déployant sur un autre compte.
+// Les valeurs de repli ne servent que hors GitHub Pages : ouverture en
+// local, domaine personnalisé, prévisualisation.
+const GH_REPLI = { owner:'ownleex', repo:'herbier' };
+const GH = (()=>{
+  const compte = location.hostname.match(/^([\w-]+)\.github\.io$/i);
+  const seg = location.pathname.split('/').filter(Boolean);
+  const depot = (seg.length && !/\.html?$/i.test(seg[0])) ? seg[0] : '';
+  return {
+    owner : compte ? compte[1] : GH_REPLI.owner,
+    // pas de segment sur une page de compte : le dépôt porte le nom de l'hôte
+    repo  : compte ? (depot || location.hostname) : GH_REPLI.repo,
+    branch: 'main',
+    path  : 'data.js'
+  };
+})();
 
 let base = structuredClone(HERBES);   // dernier contenu publié connu
 let data = charger();
@@ -637,7 +655,7 @@ function jeton(){
 }
 function demanderJeton(){
   const v = prompt(
-    'Jeton GitHub (fine-grained, permission Contents: Read and write sur ownleex/herbier).\n' +
+    `Jeton GitHub (fine-grained, permission Contents: Read and write sur ${GH.owner}/${GH.repo}).\n` +
     'Laissez vide pour effacer le jeton enregistré.',
     jeton());
   if(v === null) return jeton();
